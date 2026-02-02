@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Cinzel:wght@400;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,6 +19,8 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         serif: ['Playfair Display', 'serif'],
+                        classic: ['Cinzel', 'serif'],
+                        mono: ['Roboto Mono', 'monospace'],
                     }
                 }
             }
@@ -238,12 +240,134 @@
              );
         }
 
+        const ClassicTemplate = ({ property, images }) => {
+            const heroImage = images.length > 0 ? images[0] : 'https://placehold.co/800x600/f5f5f4/a8a29e?text=No+Image';
+            const gridImages = images.slice(1, 5);
+
+            return (
+                <div className="w-full h-full bg-[#Fdfbf7] text-stone-800 flex flex-col font-classic p-8 border-[12px] border-stone-200">
+                    <div className="border border-stone-800 h-full flex flex-col p-8 relative">
+                         {/* Corner Ornaments */}
+                         <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-stone-800"></div>
+                         <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-stone-800"></div>
+                         <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-stone-800"></div>
+                         <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-stone-800"></div>
+
+                        <div className="text-center mb-8">
+                             <h2 className="text-3xl font-bold border-b-2 border-stone-300 inline-block pb-2 mb-2 uppercase">{property.title}</h2>
+                             <p className="text-stone-500 font-serif italic">{property.address}</p>
+                        </div>
+
+                        <div className="flex-1 grid grid-cols-12 gap-6">
+                             <div className="col-span-8 flex flex-col gap-4">
+                                <div className="flex-1 bg-stone-100 border border-stone-300 p-2">
+                                     <img src={heroImage} alt="Main" className="w-full h-full object-cover grayscale-[20%]" />
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 h-32">
+                                    {gridImages.map((img, i) => (
+                                        <div key={i} className="h-full border border-stone-200">
+                                            <img src={img} alt="Detail" className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                             </div>
+
+                             <div className="col-span-4 flex flex-col justify-center border-l border-stone-300 pl-6 text-center">
+                                 <div className="mb-8">
+                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">Offered At</p>
+                                     <p className="text-3xl font-bold text-stone-800">{property.price}</p>
+                                 </div>
+                                 
+                                 <div className="mb-8">
+                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">Details</p>
+                                     <p className="font-serif text-lg">{property.size}</p>
+                                 </div>
+
+                                 <div className="text-left">
+                                     <p className="text-center text-sm uppercase tracking-widest text-stone-400 mb-3">Features</p>
+                                     <ul className="space-y-2 font-serif text-sm">
+                                         {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
+                                             <li key={i} className="list-disc list-inside">{f}</li>
+                                         ))}
+                                     </ul>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        const IndustrialTemplate = ({ property, images }) => {
+            const heroImage = images.length > 0 ? images[0] : 'https://placehold.co/800x600/333333/666666?text=No+Image';
+            const gridImages = images.slice(1, 5);
+
+            return (
+                <div className="w-full h-full bg-zinc-900 text-zinc-100 flex flex-col font-mono p-4">
+                    <div className="border-4 border-zinc-700 h-full flex flex-col">
+                        <div className="bg-zinc-800 p-6 border-b-4 border-zinc-700 flex justify-between items-center">
+                            <div>
+                                <h1 className="text-2xl font-bold uppercase tracking-tighter text-yellow-500 mb-1">
+                                    // {property.title}
+                                </h1>
+                                <p className="text-xs text-zinc-400 uppercase tracking-widest">
+                                    LOC: {property.address}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-zinc-500 uppercase">Current Valuation</div>
+                                <div className="text-3xl font-bold text-white">{property.price}</div>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 p-6 grid grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-4">
+                                <div className="flex-1 relative group">
+                                    <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1">IMG_001</div>
+                                    <img src={heroImage} alt="Main" className="w-full h-full object-cover border-2 border-zinc-600 grayscale hover:grayscale-0 transition-all duration-300" />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col">
+                                <div className="mb-6 p-4 border-2 border-zinc-700 bg-zinc-800/50">
+                                    <h3 className="text-yellow-500 font-bold mb-4 uppercase text-sm border-b border-zinc-600 pb-2">Specs_Sheet</h3>
+                                    <p className="text-lg mb-2">> {property.size}</p>
+                                    <div className="grid grid-cols-1 gap-2 text-sm text-zinc-300">
+                                        {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <span className="text-yellow-500">[+]</span> {f}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mt-auto">
+                                    {gridImages.map((img, i) => (
+                                        <div key={i} className="aspect-video border border-zinc-700 relative">
+                                            <img src={img} alt="Detail" className="w-full h-full object-cover opacity-80 hover:opacity-100" />
+                                            <div className="absolute bottom-0 right-0 bg-black/50 text-[10px] px-1 text-white">0{i+2}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-zinc-800 p-2 text-center text-[10px] text-zinc-500 uppercase border-t-4 border-zinc-700">
+                            Generated by RealShow AI Lite // System Ready
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
         const Preview = ({ property, images, template }) => {
             return (
                 <div id="preview-content" className="w-full h-full">
                     {template === 'modernist' && <ModernistTemplate property={property} images={images} />}
                     {template === 'luxury' && <LuxuryTemplate property={property} images={images} />}
                     {template === 'minimalist' && <MinimalistTemplate property={property} images={images} />}
+                    {template === 'classic' && <ClassicTemplate property={property} images={images} />}
+                    {template === 'industrial' && <IndustrialTemplate property={property} images={images} />}
                 </div>
             );
         };
@@ -277,7 +401,9 @@
             const templates = [
                 { id: 'modernist', name: 'Modernist' },
                 { id: 'luxury', name: 'Luxury' },
-                { id: 'minimalist', name: 'Minimalist' }
+                { id: 'minimalist', name: 'Minimalist' },
+                { id: 'classic', name: 'Classic' },
+                { id: 'industrial', name: 'Industrial' }
             ];
 
             return (
@@ -287,7 +413,7 @@
                          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-800">
                             <Layout className="w-5 h-5" /> Template
                         </h2>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             {templates.map(t => (
                                 <button
                                     key={t.id}
