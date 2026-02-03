@@ -539,7 +539,7 @@
             );
         };
 
-        function Editor({ property, setProperty, images, setImages, template, setTemplate }) {
+        function Editor({ property, setProperty, images, setImages }) {
             const handleChange = (e) => {
                 const { name, value } = e.target;
                 setProperty(prev => ({ ...prev, [name]: value }));
@@ -565,43 +565,8 @@
                 setImages(prev => prev.filter((_, i) => i !== index));
             };
 
-            const templates = [
-                { id: 'modernist', name: 'Modernist' },
-                { id: 'luxury', name: 'Luxury' },
-                { id: 'minimalist', name: 'Minimalist' },
-                { id: 'classic', name: 'Classic' },
-                { id: 'industrial', name: 'Industrial' },
-                { id: 'scandinavian', name: 'Scandinavian' },
-                { id: 'urban', name: 'Urban Loft' },
-                { id: 'magazine', name: 'Magazine' }
-            ];
-
             return (
                 <div className="bg-white p-6 space-y-6">
-                    {/* Template Selector */}
-                    <div>
-                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-800">
-                            <Layout className="w-5 h-5" /> Template
-                        </h2>
-                        <div className="grid grid-cols-2 gap-2">
-                            {templates.map(t => (
-                                <button
-                                    key={t.id}
-                                    onClick={() => setTemplate(t.id)}
-                                    className={`py-2 px-1 rounded-lg border-2 text-sm font-medium transition-all ${
-                                        template === t.id 
-                                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm' 
-                                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {t.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 my-6"></div>
-
                     {/* Image Upload Section */}
                     <div>
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-800">
@@ -722,6 +687,49 @@
             const [images, setImages] = useState([]);
             const [template, setTemplate] = useState('modernist');
             const [isGenerating, setIsGenerating] = useState(false);
+            const [scale, setScale] = useState(1);
+            const previewParentRef = React.useRef(null);
+
+            const templates = [
+                { id: 'modernist', name: 'Modernist' },
+                { id: 'luxury', name: 'Luxury' },
+                { id: 'minimalist', name: 'Minimalist' },
+                { id: 'classic', name: 'Classic' },
+                { id: 'industrial', name: 'Industrial' },
+                { id: 'scandinavian', name: 'Scandinavian' },
+                { id: 'urban', name: 'Urban Loft' },
+                { id: 'magazine', name: 'Magazine' }
+            ];
+
+            useEffect(() => {
+                const handleResize = () => {
+                    const parent = previewParentRef.current;
+                    if (parent) {
+                        const availableWidth = parent.clientWidth - 64; // 32px padding * 2
+                        const availableHeight = parent.clientHeight - 64;
+                        
+                        // A4 dimensions at 96 DPI (approx)
+                        const targetW = 794;
+                        const targetH = 1123;
+                        
+                        const scaleW = availableWidth / targetW;
+                        const scaleH = availableHeight / targetH;
+                        
+                        // Fit both width and height
+                        // Aggressive scaling to ensure it fits without scrolling: 0.90
+                        const newScale = Math.min(scaleW, scaleH, 0.90);
+                        setScale(newScale);
+                    }
+                };
+
+                window.addEventListener('resize', handleResize);
+                handleResize();
+                
+                // Small delay to ensure layout is ready
+                setTimeout(handleResize, 100);
+
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
 
             const generatePDF = async () => {
                 setIsGenerating(true);
@@ -729,10 +737,21 @@
                 if (!element) return;
 
                 try {
+                    // Use onclone to reset the transform in the captured copy
                     const canvas = await html2canvas(element, {
-                        scale: 2, // Higher scale for better quality
-                        useCORS: true, // Handle cross-origin images
-                        logging: false
+                        scale: 2, // High resolution
+                        useCORS: true,
+                        logging: false,
+                        onclone: (clonedDoc) => {
+                            const clonedElement = clonedDoc.getElementById('preview-content');
+                            const clonedWrapper = clonedDoc.getElementById('preview-wrapper');
+                            if (clonedWrapper) {
+                                // Remove transform to capture full size
+                                clonedWrapper.style.transform = 'none';
+                                clonedWrapper.style.width = '794px';
+                                clonedWrapper.style.height = '1123px';
+                            }
+                        }
                     });
 
                     const imgData = canvas.toDataURL('image/png');
@@ -759,7 +778,7 @@
             return (
                 <div className="flex flex-col md:flex-row h-screen bg-slate-100 font-sans overflow-hidden">
                     {/* Sidebar / Editor */}
-                    <div className="w-full md:w-96 border-r border-slate-200 bg-white flex flex-col z-10 shadow-lg shrink-0">
+                    <div className="w-full md:w-96 border-r border-slate-200 bg-white flex flex-col z-10 shadow-lg shrink-0 h-full relative">
                         <div className="p-5 border-b border-slate-200 bg-white z-10 sticky top-0">
                              <div className="flex justify-between items-center mb-4">
                                 <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -767,6 +786,28 @@
                                     RealShow
                                 </h1>
                              </div>
+                             
+                             {/* Fixed Template Selector */}
+                             <div className="mb-4">
+                                <label className="text-xs uppercase font-bold text-slate-500 mb-1 block flex items-center gap-1">
+                                    <Layout className="w-3 h-3" /> Select Template
+                                </label>
+                                <div className="relative">
+                                    <select 
+                                        value={template} 
+                                        onChange={(e) => setTemplate(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-medium"
+                                    >
+                                        {templates.map(t => (
+                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                             </div>
+
                              <button 
                                 onClick={generatePDF}
                                 disabled={isGenerating}
@@ -788,16 +829,23 @@
                                 setProperty={setProperty}
                                 images={images}
                                 setImages={setImages}
-                                template={template}
-                                setTemplate={setTemplate}
                             />
                         </div>
                     </div>
 
                     {/* Preview Area */}
-                    <div className="flex-1 overflow-y-auto bg-slate-50 flex items-start justify-center p-8">
-                        {/* A4 Aspect Ratio Container */}
-                        <div className="bg-white shadow-2xl w-full max-w-[210mm] aspect-[210/297] flex flex-col relative overflow-hidden transition-all duration-300">
+                    <div ref={previewParentRef} className="flex-1 bg-slate-100 flex items-center justify-center relative overflow-hidden">
+                        <div 
+                            id="preview-wrapper"
+                            style={{ 
+                                transform: `scale(${scale})`, 
+                                transformOrigin: 'center center',
+                                width: '794px',
+                                height: '1123px',
+                                transition: 'transform 0.2s ease-out'
+                            }}
+                            className="bg-white shadow-2xl shrink-0"
+                        >
                              <Preview property={property} images={images} template={template} />
                         </div>
                     </div>
