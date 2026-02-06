@@ -63,7 +63,8 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        const { Camera, Home, Upload, X, FileText, Layout, Download, Check, Image as ImageIcon, Palette, ChevronDown, Loader2 } = LucideReact;
+        // Fix: Avoid 'as' keyword in destructuring if causing issues, or use strict variable names
+        const { Camera, Home, Upload, X, FileText, Layout, Download, Check, Image: ImageIcon, Palette, ChevronDown, Loader2 } = LucideReact;
 
         // --- Templates ---
 
