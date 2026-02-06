@@ -534,24 +534,35 @@
                 { id: 'magazine', name: 'Magazine' }
             ];
 
-            // Scaling Logic
+            // Scaling Logic (Fit to Screen / Side-by-Side)
             useEffect(() => {
                 const handleResize = () => {
                     if (previewRef.current) {
-                        const parentH = previewRef.current.clientHeight - 64;
-                        const parentW = previewRef.current.clientWidth - 64;
-                        const pageH = 1123; // A4 px height
-                        const pageW = 794;  // A4 px width
+                        const parentH = previewRef.current.clientHeight - 48; // 24px padding top/bottom
+                        const parentW = previewRef.current.clientWidth - 48; // 24px padding left/right
+                        const pageH = 1123; 
+                        const pageW = 794;
+                        const gap = 32; // Gap between pages
                         
-                        // Fit strictly by height of ONE page to allow scrolling vertical
-                        // Or fit by width. 
-                        // User wants "no scroll". If we show 2 pages stacked, "no scroll" makes them tiny.
-                        // We will fit width and allow vertical scroll for the 2nd page.
-                        const scaleW = parentW / pageW;
-                        const scaleH = parentH / pageH; 
+                        // Calculate scale to fit 2 pages side-by-side
+                        // 1. Fit Height: Scale based on full A4 height
+                        const scaleFitHeight = parentH / pageH;
                         
-                        // Use a scale that fits width nicely, max 1.0
-                        setScale(Math.min(scaleW, 1.2)); 
+                        // 2. Fit Width: Scale based on (2 * Width + Gap)
+                        const scaleFitWidth = parentW / ((pageW * 2) + gap);
+                        
+                        // Choose the smaller scale to ensure EVERYTHING fits
+                        // But if screen is too narrow (mobile), fall back to single page stack logic
+                        let newScale;
+                        if (parentW < 800) {
+                             // Mobile/Narrow: Stacked, fit width
+                             newScale = parentW / pageW;
+                        } else {
+                             // Desktop: Side-by-side, fit both dimensions
+                             newScale = Math.min(scaleFitHeight, scaleFitWidth, 1.0);
+                        }
+
+                        setScale(newScale);
                     }
                 };
                 window.addEventListener('resize', handleResize);
@@ -754,14 +765,16 @@
                     </div>
 
                     {/* --- Preview Area --- */}
-                    <div ref={previewRef} className="flex-1 bg-slate-950 overflow-y-auto flex justify-center p-8 relative">
+                    <div ref={previewRef} className="flex-1 bg-slate-950 overflow-hidden flex items-center justify-center relative">
+                        {/* Container needs to be large enough to hold scaled content centrally */}
                         <div 
                             style={{ 
                                 transform: `scale(${scale})`, 
-                                transformOrigin: 'top center',
-                                width: '794px' // Fixed width for A4
+                                transformOrigin: 'center center',
+                                width: window.innerWidth < 1000 ? '794px' : '1620px', // Single or Double width base
+                                transition: 'width 0.3s ease'
                             }}
-                            className="flex flex-col gap-8 mb-20 shrink-0"
+                            className="flex flex-row flex-wrap justify-center gap-8 shrink-0 transition-transform duration-200"
                         >
                              {/* Render selected template (contains Page 1 and Page 2) */}
                             {template === 'modernist' && <ModernistTemplate property={property} images={currentImages} />}
@@ -776,7 +789,7 @@
                         
                         {/* Zoom Indicator */}
                         <div className="fixed bottom-6 right-6 bg-slate-800/80 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-mono border border-slate-700 shadow-lg pointer-events-none">
-                            Zoom: {Math.round(scale * 100)}% | A4 x 2 Pages
+                            Fit: {Math.round(scale * 100)}%
                         </div>
                     </div>
                 </div>
