@@ -904,14 +904,14 @@
                             className="flex flex-row flex-wrap justify-center gap-8 shrink-0 transition-transform duration-200"
                         >
                              {/* Render selected template (contains Page 1 and Page 2) */}
-                            {template === 'modernist' && <ModernistTemplate property={property} images={currentImages} />}
-                            {template === 'luxury' && <LuxuryTemplate property={property} images={currentImages} />}
-                            {template === 'minimalist' && <MinimalistTemplate property={property} images={currentImages} />}
-                            {template === 'classic' && <ClassicTemplate property={property} images={currentImages} />}
-                            {template === 'industrial' && <IndustrialTemplate property={property} images={currentImages} />}
-                            {template === 'scandinavian' && <ScandinavianTemplate property={property} images={currentImages} />}
-                            {template === 'urban' && <UrbanLoftTemplate property={property} images={currentImages} />}
-                            {template === 'magazine' && <MagazineTemplate property={property} images={currentImages} />}
+                            {template === 'modernist' && <ModernistTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'luxury' && <LuxuryTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'minimalist' && <MinimalistTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'classic' && <ClassicTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'industrial' && <IndustrialTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'scandinavian' && <ScandinavianTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'urban' && <UrbanLoftTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'magazine' && <MagazineTemplate property={property} images={currentImages} agent={agent} />}
                         </div>
                         
                         {/* Zoom Indicator */}
