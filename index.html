@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>RealShow AI - Multi-Page Edition</title>
     
     <!-- Fonts -->
@@ -68,36 +68,27 @@
 
         // --- Templates ---
 
-        // Helper: Gallery Page Component (Supports up to 8 gallery items + 1 Hero = 9 Total)
-        const GalleryPage = ({ images, title, agent, theme = 'light', font = 'sans' }) => {
-            const displayImages = images.slice(1); // Skip hero image (index 0)
+        // Helper: Gallery Page (1 cover + 8 gallery = 9 total; page 2 shows 8 equal-sized images)
+        const GalleryPage = ({ images, title, agent, language = 'en', theme = 'light', font = 'sans' }) => {
+            const displayImages = images.slice(1); // Skip hero (index 0), show slots 1–8
             const bgClass = theme === 'dark' ? 'bg-zinc-900 text-white' : 'bg-white text-slate-900';
-            
-            // Dynamic Grid Layout based on count
-            let gridClass = "grid-cols-2";
-            if (displayImages.length >= 5) gridClass = "grid-cols-3";
-            if (displayImages.length >= 7) gridClass = "grid-cols-4"; // 8 total items (1 hero + 7 gallery)
 
             return (
                 <div className={`pdf-page ${bgClass} font-${font} flex flex-col p-12`}>
-                    <div className="border-b-2 border-current pb-4 mb-8 flex justify-between items-end">
-                        <h2 className="text-3xl font-light uppercase tracking-widest">Photo Gallery</h2>
+                    <div className="border-b-2 border-current pb-4 mb-6 flex justify-between items-end shrink-0">
+                        <h2 className="text-3xl font-light uppercase tracking-widest">{t(language, 'photoGalleryTitle')}</h2>
                         <span className="text-sm opacity-60">{title}</span>
                     </div>
                     
-                    <div className={`grid ${gridClass} gap-4 flex-1 content-start`}>
-                        {displayImages.map((img, i) => {
-                            // First item in gallery can be featured if odd count
-                            const isFeatured = (displayImages.length % 2 !== 0 && i === 0 && displayImages.length < 7);
-                            return (
-                                <div key={i} className={`relative overflow-hidden rounded-sm bg-slate-200 ${isFeatured ? 'col-span-2 row-span-2 h-96' : 'h-48'}`}>
-                                    <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                                </div>
-                            );
-                        })}
+                    <div className="grid grid-cols-2 grid-rows-4 gap-4 flex-1 min-h-0 overflow-hidden">
+                        {displayImages.slice(0, 8).map((img, i) => (
+                            <div key={i} className="relative overflow-hidden rounded-sm bg-slate-200 min-h-0 aspect-video">
+                                <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover object-center" />
+                            </div>
+                        ))}
                         {displayImages.length === 0 && (
-                            <div className="col-span-full h-96 flex items-center justify-center opacity-20 border-2 border-dashed border-current rounded-lg">
-                                <span className="text-xl">Add photos to slots 2-8 to populate gallery</span>
+                            <div className="col-span-4 row-span-2 flex items-center justify-center opacity-20 border-2 border-dashed border-current rounded-lg min-h-0">
+                                <span className="text-xl">{t(language, 'photoGalleryEmpty')}</span>
                             </div>
                         )}
                     </div>
@@ -107,11 +98,12 @@
             );
         };
 
-        const ModernistTemplate = ({ property, images, agent }) => (
+        const ModernistTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 {/* Page 1 */}
                 <div className="pdf-page bg-white text-slate-900 flex flex-col font-sans">
                     <div className="h-[55%] w-full bg-slate-200 relative overflow-hidden">
+                        <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                         <img src={images[0]} alt="Main" className="w-full h-full object-cover" />
                         <div className="absolute bottom-0 left-0 bg-white/95 p-8 backdrop-blur-sm m-8 max-w-xl shadow-lg border-l-8 border-blue-600">
                             <h1 className="text-3xl font-extrabold uppercase tracking-tight mb-2 text-slate-900">{property.title}</h1>
@@ -122,12 +114,12 @@
                         <div className="flex justify-between items-end border-b-4 border-slate-900 pb-6 mb-8">
                             <h2 className="text-6xl font-black tracking-tighter text-blue-600">{property.price}</h2>
                             <div className="text-right">
-                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">Specifications</p>
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">{t(language, 'specifications')}</p>
                                 <p className="text-2xl font-semibold text-slate-800">{property.size}</p>
                             </div>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold uppercase mb-6 text-slate-800 flex items-center gap-2">Property Highlights</h3>
+                            <h3 className="text-lg font-bold uppercase mb-6 text-slate-800 flex items-center gap-2">{t(language, 'propertyHighlights')}</h3>
                             <ul className="space-y-3">
                                 {property.features.split('\n').filter(f => f.trim()).map((feature, i) => (
                                     <li key={i} className="flex items-start gap-3 text-slate-700 text-lg">
@@ -141,11 +133,11 @@
                     </div>
                 </div>
                 {/* Page 2 */}
-                <GalleryPage images={images} title={property.title} agent={agent} font="sans" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="sans" theme="light" />
             </>
         );
 
-        const LuxuryTemplate = ({ property, images, agent }) => (
+        const LuxuryTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-slate-900 text-white flex flex-col font-serif relative border-8 border-slate-900">
                     <div className="absolute inset-4 border border-amber-500/30 pointer-events-none"></div>
@@ -154,7 +146,8 @@
                          <p className="text-slate-400 italic tracking-wide text-lg">{property.address}</p>
                     </div>
                     <div className="h-[45%] w-full relative mx-auto px-12">
-                         <div className="w-full h-full border-2 border-amber-500/50 p-1">
+                         <div className="w-full h-full border-2 border-amber-500/50 p-1 relative">
+                            <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={true} />
                             <img src={images[0]} alt="Main" className="w-full h-full object-cover" />
                         </div>
                     </div>
@@ -165,7 +158,7 @@
                              <div className="h-px bg-amber-500/50 flex-1"></div>
                         </div>
                          <div className="text-slate-300 flex-1">
-                             <h3 className="text-xl text-amber-500 mb-6 uppercase tracking-widest border-b border-amber-500/20 pb-2">Details</h3>
+                             <h3 className="text-xl text-amber-500 mb-6 uppercase tracking-widest border-b border-amber-500/20 pb-2">{t(language, 'details')}</h3>
                              <p className="text-2xl mb-6 font-light text-white">{property.size}</p>
                              <ul className="grid grid-cols-2 gap-4">
                                 {property.features.split('\n').filter(f => f.trim()).map((feature, i) => (
@@ -178,11 +171,11 @@
                          <TemplateFooter agent={agent} page="Page 01" theme="dark" />
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="serif" theme="dark" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="serif" theme="dark" />
             </>
         );
 
-        const MinimalistTemplate = ({ property, images, agent }) => (
+        const MinimalistTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-white text-slate-800 flex flex-col font-sans p-12">
                      <div className="flex-1 grid grid-cols-12 grid-rows-6 gap-6">
@@ -196,6 +189,7 @@
                              </div>
                          </div>
                          <div className="col-span-8 row-span-5 bg-slate-50 relative group overflow-hidden">
+                             <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                              <img src={images[0]} alt="Main" className="w-full h-full object-cover" />
                          </div>
                          <div className="col-span-4 row-span-5 flex flex-col pl-4">
@@ -211,11 +205,11 @@
                          </div>
                      </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="sans" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="sans" theme="light" />
             </>
         );
 
-        const ClassicTemplate = ({ property, images, agent }) => (
+        const ClassicTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-[#Fdfbf7] text-stone-800 flex flex-col font-classic p-8 border-[12px] border-stone-200">
                     <div className="border border-stone-800 h-full flex flex-col p-8 relative">
@@ -230,20 +224,21 @@
                              <p className="text-stone-500 font-serif italic">{property.address}</p>
                         </div>
                         <div className="flex-1 flex flex-col gap-6">
-                            <div className="h-[50%] bg-stone-100 border border-stone-300 p-2">
+                            <div className="h-[50%] bg-stone-100 border border-stone-300 p-2 relative">
+                                    <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                                     <img src={images[0]} alt="Main" className="w-full h-full object-cover grayscale-[20%]" />
                             </div>
                             <div className="flex flex-col justify-center text-center mt-4 flex-1">
                                  <div className="mb-8">
-                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">Offered At</p>
+                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">{t(language, 'offeredAt')}</p>
                                      <p className="text-4xl font-bold text-stone-800">{property.price}</p>
                                  </div>
                                  <div className="mb-8">
-                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">Details</p>
+                                     <p className="text-sm uppercase tracking-widest text-stone-400 mb-1">{t(language, 'details')}</p>
                                      <p className="font-serif text-xl">{property.size}</p>
                                  </div>
                                  <div className="text-left max-w-md mx-auto">
-                                     <p className="text-center text-sm uppercase tracking-widest text-stone-400 mb-3">Features</p>
+                                     <p className="text-center text-sm uppercase tracking-widest text-stone-400 mb-3">{t(language, 'features')}</p>
                                      <ul className="space-y-2 font-serif text-sm grid grid-cols-2 gap-x-8">
                                          {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
                                              <li key={i} className="list-disc list-inside">{f}</li>
@@ -255,11 +250,11 @@
                         </div>
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="classic" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="classic" theme="light" />
             </>
         );
 
-        const IndustrialTemplate = ({ property, images, agent }) => (
+        const IndustrialTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-zinc-900 text-zinc-100 flex flex-col font-mono p-4">
                     <div className="border-4 border-zinc-700 h-full flex flex-col">
@@ -269,18 +264,19 @@
                                 <p className="text-xs text-zinc-400 uppercase tracking-widest">LOC: {property.address}</p>
                             </div>
                             <div className="text-right">
-                                <div className="text-xs text-zinc-500 uppercase">Valuation</div>
+                                <div className="text-xs text-zinc-500 uppercase">{t(language, 'valuation')}</div>
                                 <div className="text-3xl font-bold text-white">{property.price}</div>
                             </div>
                         </div>
                         <div className="flex-1 p-6 flex flex-col gap-6">
                             <div className="h-[55%] relative group">
                                 <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1">IMG_001</div>
+                                <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={true} />
                                 <img src={images[0]} alt="Main" className="w-full h-full object-cover border-2 border-zinc-600 grayscale hover:grayscale-0 transition-all duration-300" />
                             </div>
                             <div className="flex-1">
                                 <div className="mb-6 p-4 border-2 border-zinc-700 bg-zinc-800/50 h-full">
-                                    <h3 className="text-yellow-500 font-bold mb-4 uppercase text-sm border-b border-zinc-600 pb-2">Specs_Sheet</h3>
+                                    <h3 className="text-yellow-500 font-bold mb-4 uppercase text-sm border-b border-zinc-600 pb-2">{t(language, 'specsSheet')}</h3>
                                     <p className="text-lg mb-4">> {property.size}</p>
                                     <div className="grid grid-cols-2 gap-4 text-sm text-zinc-300">
                                         {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
@@ -297,11 +293,11 @@
                         </div>
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="mono" theme="dark" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="mono" theme="dark" />
             </>
         );
 
-        const ScandinavianTemplate = ({ property, images, agent }) => (
+        const ScandinavianTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-[#f8fafc] text-slate-700 flex flex-col font-sans">
                     <div className="p-8 text-center bg-white border-b border-slate-100">
@@ -310,22 +306,23 @@
                     </div>
                     <div className="flex-1 p-8 flex flex-col">
                         <div className="grid grid-cols-12 gap-8 content-start flex-1">
-                            <div className="col-span-12 h-[55%] rounded-2xl overflow-hidden shadow-sm">
+                            <div className="col-span-12 h-[55%] rounded-2xl overflow-hidden shadow-sm relative">
+                                <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                                 <img src={images[0]} alt="Main" className="w-full h-full object-cover" />
                             </div>
                             <div className="col-span-12 bg-white rounded-2xl p-8 shadow-sm grid grid-cols-2 gap-8">
                                 <div>
                                     <div className="mb-6">
-                                        <p className="text-xs uppercase text-slate-400 font-bold mb-2">Price</p>
+                                        <p className="text-xs uppercase text-slate-400 font-bold mb-2">{t(language, 'priceLabel')}</p>
                                         <h2 className="text-4xl font-normal text-slate-900">{property.price}</h2>
                                     </div>
                                     <div>
-                                        <p className="text-xs uppercase text-slate-400 font-bold mb-2">Details</p>
+                                        <p className="text-xs uppercase text-slate-400 font-bold mb-2">{t(language, 'details')}</p>
                                         <p className="text-xl text-slate-800">{property.size}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-xs uppercase text-slate-400 font-bold mb-2">Features</p>
+                                    <p className="text-xs uppercase text-slate-400 font-bold mb-2">{t(language, 'features')}</p>
                                     <ul className="space-y-2">
                                         {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
                                             <li key={i} className="text-sm text-slate-600 flex items-center gap-2">
@@ -339,37 +336,38 @@
                         <TemplateFooter agent={agent} page="Page 01" theme="light" />
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="sans" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="sans" theme="light" />
             </>
         );
 
-        const UrbanLoftTemplate = ({ property, images, agent }) => (
+        const UrbanLoftTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-[#e5e5e5] text-black flex flex-col font-urban relative">
-                    <div className="absolute top-0 right-0 w-1/3 h-full bg-[#1a1a1a] clip-path-polygon"></div>
-                    <div className="z-10 p-10 h-full flex flex-col">
+                    <div className="absolute top-0 right-0 w-1/3 h-full bg-[#1a1a1a] -z-[1]" style={{ clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0 100%)' }}></div>
+                    <div className="z-10 p-10 h-full flex flex-col min-w-0">
                         <div className="bg-white p-8 shadow-2xl mb-6 max-w-2xl border-l-8 border-[#ff4d4d]">
                             <h1 className="text-5xl font-bold uppercase leading-none mb-2">{property.title}</h1>
                             <p className="text-xl font-bold text-[#ff4d4d]">{property.price}</p>
                         </div>
                         <div className="flex-1 flex flex-col gap-6">
-                             <div className="h-[55%] border-4 border-black p-2 bg-white transform -rotate-1 shadow-xl">
+                             <div className="h-[55%] border-4 border-black p-2 bg-white transform -rotate-1 shadow-xl relative">
+                                <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                                 <img src={images[0]} alt="Main" className="w-full h-full object-cover grayscale contrast-125" />
                             </div>
-                            <div className="bg-black text-white p-8 shadow-xl flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 className="text-2xl font-bold uppercase border-b-2 border-[#ff4d4d] inline-block mb-2">Specs</h3>
-                                        <p className="text-xl">{property.size}</p>
+                            <div className="bg-black text-white p-8 shadow-xl flex-1 flex flex-col min-w-0 overflow-visible">
+                                <div className="flex flex-wrap gap-4 justify-between items-start mb-6 min-w-0">
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-2xl font-bold uppercase border-b-2 border-[#ff4d4d] inline-block mb-2">{t(language, 'specs')}</h3>
+                                        <p className="text-xl break-words">{property.size}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-gray-500 uppercase">Location</p>
-                                        <p className="text-lg font-bold">{property.address}</p>
+                                    <div className="text-right min-w-0 flex-shrink-0">
+                                        <p className="text-sm font-bold text-gray-500 uppercase">{t(language, 'location')}</p>
+                                        <p className="text-lg font-bold break-words">{property.address}</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-auto">
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-300 mb-auto min-w-0">
                                     {property.features.split('\n').filter(f => f.trim()).map((f, i) => (
-                                        <p key={i}>/ {f}</p>
+                                        <p key={i} className="break-words overflow-visible">/ {f}</p>
                                     ))}
                                 </div>
                                 <TemplateFooter agent={agent} page="Page 01" theme="dark" />
@@ -377,14 +375,15 @@
                         </div>
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} agent={agent} font="urban" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="urban" theme="light" />
             </>
         );
 
-        const MagazineTemplate = ({ property, images, agent }) => (
+        const MagazineTemplate = ({ property, images, agent, language = 'en', listingType, propertyType }) => (
             <>
                 <div className="pdf-page bg-white text-black flex flex-col font-serif overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-[55%] h-full">
+                        <CoverBadge listingType={listingType} propertyType={propertyType} language={language} dark={false} />
                         <img src={images[0]} alt="Main" className="w-full h-full object-cover" />
                     </div>
                     <div className="w-[50%] h-full bg-white z-10 flex flex-col p-12 pr-0 relative justify-center">
@@ -413,11 +412,368 @@
                         </div>
                     </div>
                 </div>
-                <GalleryPage images={images} title={property.title} font="serif" theme="light" />
+                <GalleryPage images={images} title={property.title} agent={agent} language={language} font="serif" theme="light" />
             </>
         );
 
         // --- UI Components ---
+
+        const LISTING_TYPES = [
+            { id: 'sale', en: 'For Sale', tr: 'Satılık', ar: 'للبيع', ru: 'Продажа', de: 'Zu verkaufen', it: 'In vendita', es: 'En venta', zh: '出售' },
+            { id: 'rent', en: 'For Rent', tr: 'Kiralık', ar: 'للإيجار', ru: 'Аренда', de: 'Zu vermieten', it: 'Affitto', es: 'Alquiler', zh: '出租' }
+        ];
+        const PROPERTY_TYPES = [
+            { id: 'villa', en: 'Villa', tr: 'Villa', ar: 'فيلا', ru: 'Вилла', de: 'Villa', it: 'Villa', es: 'Villa', zh: '别墅' },
+            { id: 'apartment', en: 'Apartment', tr: 'Daire', ar: 'شقة', ru: 'Квартира', de: 'Wohnung', it: 'Appartamento', es: 'Apartamento', zh: '公寓' },
+            { id: 'land', en: 'Land', tr: 'Arsa', ar: 'أرض', ru: 'Земельный участок', de: 'Grundstück', it: 'Terreno', es: 'Terreno', zh: '土地' },
+            { id: 'penthouse', en: 'Penthouse', tr: 'Penthouse', ar: 'بنتهاوس', ru: 'Пентхаус', de: 'Penthouse', it: 'Attico', es: 'Ático', zh: '复式' },
+            { id: 'residence', en: 'Residence', tr: 'Rezidans', ar: 'سكن فاخر', ru: 'Резиденция', de: 'Residenz', it: 'Residenza', es: 'Residencia', zh: '住宅' },
+            { id: 'loft', en: 'Loft', tr: 'Loft', ar: 'لوفت', ru: 'Лофт', de: 'Loft', it: 'Loft', es: 'Loft', zh: '阁楼' }
+        ];
+        const getListingLabel = (id, lang) => (LISTING_TYPES.find(x => x.id === id) || {})[lang] || (LISTING_TYPES.find(x => x.id === id) || {}).en || id;
+        const getPropertyLabel = (id, lang) => (PROPERTY_TYPES.find(x => x.id === id) || {})[lang] || (PROPERTY_TYPES.find(x => x.id === id) || {}).en || id;
+
+        const CoverBadge = ({ listingType, propertyType, language, dark }) => {
+            const lang = ['tr','en','ar','ru','de','it','es','zh'].includes(language) ? language : 'en';
+            const bg = dark ? 'bg-white/90 text-black' : 'bg-black/80 text-white';
+            return (
+                <div className={`absolute top-4 right-4 z-10 px-4 py-2 rounded-lg ${bg} text-right shadow-lg`}>
+                    <div className="text-sm font-bold uppercase tracking-wider">{getListingLabel(listingType, lang)}</div>
+                    <div className="text-xs opacity-90 mt-0.5">{getPropertyLabel(propertyType, lang)}</div>
+                </div>
+            );
+        };
+
+        const LANGUAGES = [
+            { code: 'tr', label: 'Türkçe' },
+            { code: 'en', label: 'English' },
+            { code: 'ar', label: 'العربية' },
+            { code: 'ru', label: 'Русский' },
+            { code: 'de', label: 'Deutsch' },
+            { code: 'it', label: 'Italiano' },
+            { code: 'es', label: 'Español' },
+            { code: 'zh', label: '中文' },
+        ];
+
+        const UI_STRINGS = {
+            en: {
+                appName: 'RealShow AI',
+                subtitle: 'Multi-Page Edition',
+                selectTemplate: 'Select Template',
+                processing: 'Processing',
+                downloadPdf: 'Download PDF Pack',
+                propertyImages: 'Property Images',
+                slotsUsed: 'Slots Used',
+                coverImage: 'Cover Image (Main)',
+                uploadCover: 'Upload Cover Photo',
+                uploadBulk: 'Upload All (1-9)',
+                uploadBulkHint: 'First = cover, 2-9 = gallery',
+                galleryPhotos: 'Gallery Photos (Page 2)',
+                propertyDetails: 'Property Details',
+                features: 'Features',
+                agentInfo: 'Agent Info (Optional)',
+                nameAgency: 'Name / Agency',
+                phone: 'Phone',
+                website: 'Website',
+                languageTitle: 'Choose your language',
+                languageSubtitle: 'You can always translate the PDF to other languages later.',
+                startInLanguage: 'Start in',
+                translatePdfLabel: 'Translate this PDF to',
+                translateButton: 'Translate',
+                translating: 'Translating…',
+                photoGalleryTitle: 'Photo Gallery',
+                photoGalleryEmpty: 'Add photos to slots 2-9 to populate gallery',
+                listingType: 'Listing',
+                propertyType: 'Property Type',
+                specifications: 'Specifications',
+                propertyHighlights: 'Property Highlights',
+                details: 'Details',
+                offeredAt: 'Offered At',
+                valuation: 'Valuation',
+                specsSheet: 'Specs Sheet',
+                priceLabel: 'Price',
+                specs: 'Specs',
+                location: 'Location'
+            },
+            tr: {
+                appName: 'RealShow AI',
+                subtitle: 'Çok Sayfalı Sürüm',
+                selectTemplate: 'Şablon Seç',
+                processing: 'İşleniyor',
+                downloadPdf: 'PDF Paketi İndir',
+                propertyImages: 'İlan Fotoğrafları',
+                slotsUsed: 'Slot Kullanıldı',
+                coverImage: 'Kapak Görseli',
+                uploadCover: 'Kapak Fotoğrafı Yükle',
+                uploadBulk: 'Toplu Yükle (1-9)',
+                uploadBulkHint: 'İlk = kapak, 2-9 = galeri',
+                galleryPhotos: 'Galeri Fotoğrafları (2. Sayfa)',
+                propertyDetails: 'İlan Detayları',
+                features: 'Özellikler',
+                agentInfo: 'Danışman Bilgisi (Opsiyonel)',
+                nameAgency: 'İsim / Ofis',
+                phone: 'Telefon',
+                website: 'Web Sitesi',
+                languageTitle: 'Dilini seç',
+                languageSubtitle: 'Daha sonra PDF’yi diğer dillere çevirebilirsin.',
+                startInLanguage: 'Bu dille başla',
+                translatePdfLabel: 'Bu PDF’yi şu dile çevir',
+                translateButton: 'Çevir',
+                translating: 'Çeviriliyor…',
+                photoGalleryTitle: 'Fotoğraf Galerisi',
+                photoGalleryEmpty: 'Galeriyi doldurmak için 2-9 numaralı slotlara fotoğraf ekleyin',
+                listingType: 'İlan Türü',
+                propertyType: 'Emlak Tipi',
+                specifications: 'Teknik Özellikler',
+                propertyHighlights: 'Öne Çıkanlar',
+                details: 'Detaylar',
+                offeredAt: 'Satış Fiyatı',
+                valuation: 'Değerleme',
+                specsSheet: 'Özellik Özeti',
+                priceLabel: 'Fiyat',
+                specs: 'Özellikler',
+                location: 'Konum'
+            },
+            ar: {
+                appName: 'RealShow AI',
+                subtitle: 'إصدار متعدد الصفحات',
+                selectTemplate: 'اختر القالب',
+                processing: 'جارٍ المعالجة',
+                downloadPdf: 'تنزيل حزمة PDF',
+                propertyImages: 'صور العقار',
+                slotsUsed: 'أماكن مستخدمة',
+                coverImage: 'صورة الغلاف',
+                uploadCover: 'حمّل صورة الغلاف',
+                uploadBulk: 'رفع الكل (1-9)',
+                uploadBulkHint: 'الأول = الغلاف، 2-9 = المعرض',
+                galleryPhotos: 'صور المعرض (الصفحة 2)',
+                propertyDetails: 'تفاصيل العقار',
+                features: 'المميزات',
+                agentInfo: 'معلومات الوكيل (اختياري)',
+                nameAgency: 'الاسم / الوكالة',
+                phone: 'الهاتف',
+                website: 'الموقع الإلكتروني',
+                languageTitle: 'اختر لغتك',
+                languageSubtitle: 'يمكنك دائماً ترجمة ملف PDF لاحقاً.',
+                startInLanguage: 'ابدأ بهذه اللغة',
+                translatePdfLabel: 'ترجمة هذا الـ PDF إلى',
+                translateButton: 'ترجمة',
+                translating: 'جارٍ الترجمة…',
+                photoGalleryTitle: 'معرض الصور',
+                photoGalleryEmpty: 'أضف صوراً في الخانات 2-9 لملء المعرض',
+                listingType: 'نوع الإعلان',
+                propertyType: 'نوع العقار',
+                specifications: 'المواصفات',
+                propertyHighlights: 'أهم المميزات',
+                details: 'التفاصيل',
+                offeredAt: 'السعر المطلوب',
+                valuation: 'قيمة تقديرية',
+                specsSheet: 'ورقة المواصفات',
+                priceLabel: 'السعر',
+                specs: 'المواصفات',
+                location: 'الموقع'
+            },
+            ru: {
+                appName: 'RealShow AI',
+                subtitle: 'Многостраничная версия',
+                selectTemplate: 'Выберите шаблон',
+                processing: 'Обработка',
+                downloadPdf: 'Скачать PDF-пакет',
+                propertyImages: 'Фотографии объекта',
+                slotsUsed: 'Ячеек занято',
+                coverImage: 'Обложка',
+                uploadCover: 'Загрузить обложку',
+                uploadBulk: 'Загрузить всё (1-9)',
+                uploadBulkHint: 'Первый = обложка, 2-9 = галерея',
+                galleryPhotos: 'Фотогалерея (стр. 2)',
+                propertyDetails: 'Детали объекта',
+                features: 'Особенности',
+                agentInfo: 'Информация об агенте (опц.)',
+                nameAgency: 'Имя / Агентство',
+                phone: 'Телефон',
+                website: 'Сайт',
+                languageTitle: 'Выберите язык',
+                languageSubtitle: 'PDF можно позже перевести на другие языки.',
+                startInLanguage: 'Начать на языке',
+                translatePdfLabel: 'Перевести этот PDF на',
+                translateButton: 'Перевести',
+                translating: 'Перевод…',
+                photoGalleryTitle: 'Фотогалерея',
+                photoGalleryEmpty: 'Добавьте фото во слоты 2–9, чтобы заполнить галерею',
+                listingType: 'Тип объявления',
+                propertyType: 'Тип недвижимости',
+                specifications: 'Характеристики',
+                propertyHighlights: 'Ключевые преимущества',
+                details: 'Подробности',
+                offeredAt: 'Предложенная цена',
+                valuation: 'Оценка',
+                specsSheet: 'Лист характеристик',
+                priceLabel: 'Цена',
+                specs: 'Характеристики',
+                location: 'Локация'
+            },
+            de: {
+                appName: 'RealShow AI',
+                subtitle: 'Mehrseitige Version',
+                selectTemplate: 'Vorlage wählen',
+                processing: 'Verarbeitung',
+                downloadPdf: 'PDF-Paket herunterladen',
+                propertyImages: 'Objektfotos',
+                slotsUsed: 'Slots genutzt',
+                coverImage: 'Titelbild',
+                uploadCover: 'Titelbild hochladen',
+                uploadBulk: 'Alle hochladen (1-9)',
+                uploadBulkHint: 'Erstes = Cover, 2-9 = Galerie',
+                galleryPhotos: 'Galeriefotos (Seite 2)',
+                propertyDetails: 'Objektdetails',
+                features: 'Merkmale',
+                agentInfo: 'Maklerdaten (optional)',
+                nameAgency: 'Name / Agentur',
+                phone: 'Telefon',
+                website: 'Webseite',
+                languageTitle: 'Sprache wählen',
+                languageSubtitle: 'Sie können das PDF später in andere Sprachen übersetzen.',
+                startInLanguage: 'Mit dieser Sprache starten',
+                translatePdfLabel: 'Dieses PDF übersetzen in',
+                translateButton: 'Übersetzen',
+                translating: 'Übersetzung…',
+                photoGalleryTitle: 'Fotogalerie',
+                photoGalleryEmpty: 'Fügen Sie Fotos in Slots 2–9 hinzu, um die Galerie zu füllen',
+                listingType: 'Art',
+                propertyType: 'Immobilientyp',
+                specifications: 'Spezifikationen',
+                propertyHighlights: 'Highlights der Immobilie',
+                details: 'Details',
+                offeredAt: 'Angebotspreis',
+                valuation: 'Bewertung',
+                specsSheet: 'Datenblatt',
+                priceLabel: 'Preis',
+                specs: 'Daten',
+                location: 'Lage'
+            },
+            it: {
+                appName: 'RealShow AI',
+                subtitle: 'Edizione multi-pagina',
+                selectTemplate: 'Seleziona template',
+                processing: 'Elaborazione',
+                downloadPdf: 'Scarica pacchetto PDF',
+                propertyImages: 'Foto immobile',
+                slotsUsed: 'Slot usati',
+                coverImage: 'Immagine di copertina',
+                uploadCover: 'Carica copertina',
+                uploadBulk: 'Carica tutto (1-9)',
+                uploadBulkHint: 'Primo = copertina, 2-9 = galleria',
+                galleryPhotos: 'Foto galleria (pagina 2)',
+                propertyDetails: 'Dettagli immobile',
+                features: 'Caratteristiche',
+                agentInfo: "Info agente (opzionale)",
+                nameAgency: 'Nome / Agenzia',
+                phone: 'Telefono',
+                website: 'Sito web',
+                languageTitle: 'Scegli la tua lingua',
+                languageSubtitle: 'Puoi tradurre il PDF in altre lingue in seguito.',
+                startInLanguage: 'Inizia in',
+                translatePdfLabel: 'Traduci questo PDF in',
+                translateButton: 'Traduci',
+                translating: 'Traduzione…',
+                photoGalleryTitle: 'Galleria fotografica',
+                photoGalleryEmpty: 'Aggiungi foto negli slot 2–9 per riempire la galleria',
+                listingType: 'Tipo',
+                propertyType: 'Tipologia',
+                specifications: 'Specifiche',
+                propertyHighlights: 'Punti di forza',
+                details: 'Dettagli',
+                offeredAt: 'Prezzo richiesto',
+                valuation: 'Valutazione',
+                specsSheet: 'Scheda tecnica',
+                priceLabel: 'Prezzo',
+                specs: 'Specifiche',
+                location: 'Posizione'
+            },
+            es: {
+                appName: 'RealShow AI',
+                subtitle: 'Edición multi página',
+                selectTemplate: 'Seleccionar plantilla',
+                processing: 'Procesando',
+                downloadPdf: 'Descargar paquete PDF',
+                propertyImages: 'Fotos de la propiedad',
+                slotsUsed: 'Slots usados',
+                coverImage: 'Imagen de portada',
+                uploadCover: 'Subir portada',
+                uploadBulk: 'Subir todo (1-9)',
+                uploadBulkHint: 'Primero = portada, 2-9 = galería',
+                galleryPhotos: 'Fotos de galería (pág. 2)',
+                propertyDetails: 'Detalles de la propiedad',
+                features: 'Características',
+                agentInfo: 'Datos del agente (opcional)',
+                nameAgency: 'Nombre / Agencia',
+                phone: 'Teléfono',
+                website: 'Sitio web',
+                languageTitle: 'Elige tu idioma',
+                languageSubtitle: 'Luego podrás traducir el PDF a otros idiomas.',
+                startInLanguage: 'Comenzar en',
+                translatePdfLabel: 'Traducir este PDF a',
+                translateButton: 'Traducir',
+                translating: 'Traduciendo…',
+                photoGalleryTitle: 'Galería de fotos',
+                photoGalleryEmpty: 'Añade fotos en los slots 2–9 para rellenar la galería',
+                listingType: 'Tipo',
+                propertyType: 'Tipo de propiedad',
+                specifications: 'Especificaciones',
+                propertyHighlights: 'Aspectos destacados',
+                details: 'Detalles',
+                offeredAt: 'Precio de oferta',
+                valuation: 'Valoración',
+                specsSheet: 'Hoja de especificaciones',
+                priceLabel: 'Precio',
+                specs: 'Especificaciones',
+                location: 'Ubicación'
+            },
+            zh: {
+                appName: 'RealShow AI',
+                subtitle: '多页版本',
+                selectTemplate: '选择模板',
+                processing: '处理中',
+                downloadPdf: '下载 PDF 套件',
+                propertyImages: '房源图片',
+                slotsUsed: '已用槽位',
+                coverImage: '封面图片',
+                uploadCover: '上传封面图片',
+                uploadBulk: '全部上传 (1-9)',
+                uploadBulkHint: '第一张 = 封面，2-9 = 画廊',
+                galleryPhotos: '画廊图片（第 2 页）',
+                propertyDetails: '房源详情',
+                features: '特色',
+                agentInfo: '经纪人信息（可选）',
+                nameAgency: '姓名 / 公司',
+                phone: '电话',
+                website: '网站',
+                languageTitle: '选择语言',
+                languageSubtitle: '稍后可以将 PDF 翻译成其他语言。',
+                startInLanguage: '以此语言开始',
+                translatePdfLabel: '将此 PDF 翻译为',
+                translateButton: '翻译',
+                translating: '正在翻译…',
+                photoGalleryTitle: '照片画廊',
+                photoGalleryEmpty: '在第 2–9 槽中添加图片以填充画廊',
+                listingType: '类型',
+                propertyType: '房产类型',
+                specifications: '规格参数',
+                propertyHighlights: '核心亮点',
+                details: '详细信息',
+                offeredAt: '报价',
+                valuation: '估值',
+                specsSheet: '参数表',
+                priceLabel: '价格',
+                specs: '参数',
+                location: '位置'
+            }
+        };
+
+        const t = (lang, key) => {
+            const dict = UI_STRINGS[lang] || UI_STRINGS.en;
+            return dict[key] || UI_STRINGS.en[key] || key;
+        };
         
         const TemplateFooter = ({ agent, page, theme = 'light', align = 'center' }) => {
             if (!agent.name && !agent.phone && !agent.website) return null;
@@ -535,6 +891,8 @@
                 size: '5 Beds | 6 Baths | 4,200 sqft',
                 features: 'Infinity Pool\nSmart Home\nWine Cellar\nPanoramic Views'
             });
+            const [listingType, setListingType] = useState('sale');
+            const [propertyType, setPropertyType] = useState('villa');
             const [agent, setAgent] = useState({
                 name: '',
                 phone: '',
@@ -545,14 +903,24 @@
             const [isGenerating, setIsGenerating] = useState(false);
             const [progress, setProgress] = useState(0);
             const [scale, setScale] = useState(1);
+            const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 900);
             const previewRef = useRef(null);
+            const [language, setLanguage] = useState('en');
+            const [showLanguageDialog, setShowLanguageDialog] = useState(true);
+            const [isTranslating, setIsTranslating] = useState(false);
+            const [translateTarget, setTranslateTarget] = useState('en');
 
             // Defaults
             const defaultImages = [
-                'https://placehold.co/800x600/e2e8f0/94a3b8?text=Cover+Photo',
-                'https://placehold.co/800x600/cbd5e1/64748b?text=Photo+2',
-                'https://placehold.co/800x600/cbd5e1/64748b?text=Photo+3',
-                'https://placehold.co/800x600/cbd5e1/64748b?text=Photo+4'
+                'https://placehold.co/800x600/e2e8f0/94a3b8?text=Cover',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=2',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=3',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=4',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=5',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=6',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=7',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=8',
+                'https://placehold.co/800x600/cbd5e1/64748b?text=9'
             ];
 
             const currentImages = images.length > 0 ? images : defaultImages;
@@ -567,6 +935,16 @@
                 { id: 'urban', name: 'Urban Loft' },
                 { id: 'magazine', name: 'Magazine' }
             ];
+
+            // Load saved language on first mount (but still show chooser)
+            useEffect(() => {
+                try {
+                    const saved = window.localStorage.getItem('realshow_language');
+                    if (saved && UI_STRINGS[saved]) {
+                        setLanguage(saved);
+                    }
+                } catch (e) {}
+            }, []);
 
             // Scaling Logic (Fit to Screen / Side-by-Side)
             useEffect(() => {
@@ -597,14 +975,16 @@
                         }
 
                         setScale(newScale);
+                        setWindowWidth(window.innerWidth);
                     }
                 };
+                if (typeof window !== 'undefined') setWindowWidth(window.innerWidth);
                 window.addEventListener('resize', handleResize);
                 setTimeout(handleResize, 100);
                 return () => window.removeEventListener('resize', handleResize);
             }, []);
 
-            // PDF Generation
+            // PDF Generation - always captures at full A4 (794x1123) regardless of device
             const generatePDF = async () => {
                 setIsGenerating(true);
                 setProgress(10);
@@ -615,25 +995,22 @@
                     const pdfW = pdf.internal.pageSize.getWidth();
                     const pdfH = pdf.internal.pageSize.getHeight();
 
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'position:fixed;top:0;left:0;width:794px;height:1123px;z-index:-99999;pointer-events:none;overflow:hidden;';
+                    document.body.appendChild(wrapper);
+
                     for (let i = 0; i < pages.length; i++) {
-                        // Clone to body to render without scale transform interference
                         const clone = pages[i].cloneNode(true);
-                        document.body.appendChild(clone);
-                        
-                        // Reset transforms/styles on clone if needed
-                        clone.style.transform = 'scale(1)';
-                        clone.style.position = 'fixed';
-                        clone.style.top = '0';
-                        clone.style.left = '0';
-                        clone.style.zIndex = '-9999';
+                        clone.style.cssText = 'width:794px!important;height:1123px!important;min-width:794px!important;min-height:1123px!important;transform:none!important;position:absolute!important;top:0!important;left:0!important;';
+                        wrapper.appendChild(clone);
 
                         const canvas = await html2canvas(clone, {
-                            scale: 2, // High res
+                            scale: 2,
                             logging: false,
                             useCORS: true
                         });
                         
-                        document.body.removeChild(clone);
+                        wrapper.removeChild(clone);
 
                         const imgData = canvas.toDataURL('image/jpeg', 0.95);
                         if (i > 0) pdf.addPage();
@@ -641,12 +1018,15 @@
                         
                         setProgress(10 + Math.round(((i + 1) / pages.length) * 80));
                     }
+                    if (wrapper.parentNode) document.body.removeChild(wrapper);
                     
                     pdf.save(`RealShow-${property.title.replace(/\s+/g, '-')}.pdf`);
                     setProgress(100);
                 } catch (err) {
                     console.error(err);
                     alert("Failed to generate PDF");
+                    const w = document.querySelector('div[style*="-99999"]');
+                    if (w?.parentNode) w.parentNode.removeChild(w);
                 } finally {
                     setTimeout(() => {
                         setIsGenerating(false);
@@ -655,31 +1035,40 @@
                 }
             };
 
-            // Handle image upload for a specific slot
+            const readFileAsDataURL = (file) => new Promise((resolve, reject) => {
+                const r = new FileReader();
+                r.onloadend = () => resolve(r.result);
+                r.onerror = () => reject(new Error('Read failed'));
+                r.readAsDataURL(file);
+            });
+
+            // Single-slot upload (tekil yükleme)
             const handleImageUpload = (e, index) => {
                 const file = e.target.files[0];
                 if (!file) return;
-
-                const reader = new FileReader();
-                reader.onloadend = () => {
+                readFileAsDataURL(file).then((result) => {
                     setImages(prev => {
                         const newImages = [...prev];
-                        // Fill empty slots if trying to upload to index 5 but index 3 is empty? 
-                        // Simpler: Just ensure array is long enough or replace existing
-                        // If array is shorter, pad with placeholders or just push if index is next
-                        // Better: Use a fixed array of 8 nulls initially? 
-                        // Let's stick to dynamic array but treat index strictly.
-                        
-                        // Ensure array has enough elements up to index
-                        while (newImages.length <= index) {
-                            newImages.push(null); // Placeholder
-                        }
-                        
-                        newImages[index] = reader.result;
+                        while (newImages.length <= index) newImages.push(null);
+                        newImages[index] = result;
                         return newImages;
                     });
-                };
-                reader.readAsDataURL(file);
+                });
+                e.target.value = '';
+            };
+
+            // Bulk upload (toplu yükleme) - first file = cover, next 7 = gallery
+            const handleBulkUpload = async (e) => {
+                const files = e.target.files;
+                if (!files?.length) return;
+                const count = Math.min(9, files.length);
+                const results = [];
+                for (let i = 0; i < count; i++) {
+                    const data = await readFileAsDataURL(files[i]);
+                    results.push(data);
+                }
+                setImages(results);
+                e.target.value = '';
             };
 
             const removeImage = (idx) => {
@@ -699,30 +1088,96 @@
                 });
             };
 
+            const handleSelectLanguage = (code) => {
+                setLanguage(code);
+                setShowLanguageDialog(false);
+                try {
+                    window.localStorage.setItem('realshow_language', code);
+                } catch (e) {}
+            };
+
+            const handleTranslateContent = async () => {
+                if (isTranslating || !translateTarget || translateTarget === language) return;
+
+                setIsTranslating(true);
+                try {
+                    const texts = [
+                        property.title,
+                        property.address,
+                        property.size,
+                        property.features,
+                        agent.name,
+                        agent.phone,
+                        agent.website
+                    ];
+
+                    const res = await fetch('/api/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            texts,
+                            sourceLang: language,
+                            targetLang: translateTarget
+                        })
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('Failed to translate');
+                    }
+
+                    const data = await res.json();
+                    const out = data.translations || texts;
+
+                    setProperty({
+                        ...property,
+                        title: out[0],
+                        address: out[1],
+                        size: out[2],
+                        features: out[3]
+                    });
+                    setAgent({
+                        ...agent,
+                        name: out[4],
+                        phone: out[5],
+                        website: out[6]
+                    });
+
+                    setLanguage(translateTarget);
+                    try {
+                        window.localStorage.setItem('realshow_language', translateTarget);
+                    } catch (e) {}
+                } catch (e) {
+                    console.error(e);
+                    alert('Translation failed');
+                } finally {
+                    setIsTranslating(false);
+                }
+            };
+
             return (
-                <div className="flex flex-col md:flex-row h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+                <div className="flex flex-col md:flex-row min-h-screen md:h-screen bg-slate-950 text-slate-100 font-sans overflow-y-auto md:overflow-hidden">
                     
                     {/* --- Sidebar (Dashboard) --- */}
-                    <div className="w-full md:w-[400px] bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-2xl shrink-0">
+                    <div className="w-full md:w-[400px] md:max-h-screen bg-slate-900 border-r border-slate-800 flex flex-col z-20 shadow-2xl shrink-0">
                         {/* Header */}
-                        <div className="p-6 border-b border-slate-800 bg-slate-900 z-10 sticky top-0">
+                        <div className="p-4 sm:p-6 border-b border-slate-800 bg-slate-900 z-10 sticky top-0">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="bg-blue-600 p-2 rounded-lg">
                                     <Home className="w-6 h-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold tracking-tight">RealShow AI</h1>
-                                    <p className="text-xs text-slate-400">Multi-Page Edition</p>
+                                    <h1 className="text-xl font-bold tracking-tight">{t(language, 'appName')}</h1>
+                                    <p className="text-xs text-slate-400">{t(language, 'subtitle')}</p>
                                 </div>
                             </div>
 
                             {/* Template Showcase Gallery */}
                             <div className="mb-6">
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                                    <span>Select Template</span>
+                                    <span>{t(language, 'selectTemplate')}</span>
                                     <span className="text-[10px] text-blue-400 font-normal">{templates.find(t => t.id === template)?.name}</span>
                                 </label>
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                                     {templates.map(t => (
                                         <TemplateThumbnail 
                                             key={t.id}
@@ -744,30 +1199,38 @@
                                 {isGenerating ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        <span>Processing {progress}%</span>
+                                        <span>{t(language, 'processing')} {progress}%</span>
                                         <div className="absolute bottom-0 left-0 h-1 bg-blue-300 transition-all duration-300" style={{ width: `${progress}%` }}></div>
                                     </>
                                 ) : (
-                                    <><Download className="w-5 h-5" /> Download PDF Pack</>
+                                    <><Download className="w-5 h-5" /> {t(language, 'downloadPdf')}</>
                                 )}
                              </button>
                         </div>
 
                         {/* Scrollable Form Area */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
                              {/* Photos (Fixed Slots) */}
                              <div className="space-y-4">
-                                <div className="flex justify-between items-center">
+                                <div className="flex justify-between items-center flex-wrap gap-2">
                                     <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                        <ImageIcon className="w-4 h-4" /> Property Images
+                                        <ImageIcon className="w-4 h-4" /> {t(language, 'propertyImages')}
                                     </h2>
-                                    <span className="text-xs text-slate-500">{images.length}/8 Slots Used</span>
+                                    <span className="text-xs text-slate-500">{images.length}/9 {t(language, 'slotsUsed')}</span>
                                 </div>
-                                
+                                <div className="flex gap-2">
+                                    <label className="flex-1 cursor-pointer">
+                                        <span className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition-colors">
+                                            <Upload className="w-4 h-4" /> {t(language, 'uploadBulk')}
+                                        </span>
+                                        <input type="file" accept="image/*" multiple onChange={handleBulkUpload} className="hidden" />
+                                    </label>
+                                    <span className="text-[10px] text-slate-500 self-center hidden sm:inline">{t(language, 'uploadBulkHint')}</span>
+                                </div>
                                 {/* Cover Image Slot (Larger) */}
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase font-bold text-blue-400 block mb-1">
-                                        Cover Image (Main)
+                                        {t(language, 'coverImage')}
                                     </label>
                                     <div className="w-full aspect-video relative rounded-lg border-2 border-blue-500/50 bg-slate-800 overflow-hidden group">
                                         {images[0] ? (
@@ -780,7 +1243,7 @@
                                         ) : (
                                             <div className="flex flex-col items-center justify-center h-full text-slate-500">
                                                 <Upload className="w-8 h-8 mb-2 opacity-50" />
-                                                <span className="text-xs">Upload Cover Photo</span>
+                                                <span className="text-xs">{t(language, 'uploadCover')}</span>
                                                 <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 0)} className="absolute inset-0 opacity-0 cursor-pointer" />
                                             </div>
                                         )}
@@ -790,10 +1253,10 @@
                                 {/* Gallery Grid (Remaining 7 Slots) */}
                                 <div>
                                     <label className="text-[10px] uppercase font-bold text-slate-500 block mb-2">
-                                        Gallery Photos (Page 2)
+                                        {t(language, 'galleryPhotos')}
                                     </label>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {[1, 2, 3, 4, 5, 6, 7].map((slotIndex) => (
+                                    <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map((slotIndex) => (
                                             <div key={slotIndex} className="aspect-square relative rounded-md border border-slate-700 bg-slate-800 overflow-hidden group hover:border-slate-500 transition-colors">
                                                 {images[slotIndex] ? (
                                                     <>
@@ -820,9 +1283,23 @@
                              {/* Details */}
                              <div className="space-y-4">
                                 <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                    <FileText className="w-4 h-4" /> Property Details
+                                    <FileText className="w-4 h-4" /> {t(language, 'propertyDetails')}
                                 </h2>
                                 <div className="space-y-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'listingType')}</label>
+                                            <select value={listingType} onChange={e => setListingType(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                                                {LISTING_TYPES.map(l => <option key={l.id} value={l.id}>{l[language] || l.en}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'propertyType')}</label>
+                                            <select value={propertyType} onChange={e => setPropertyType(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                                                {PROPERTY_TYPES.map(p => <option key={p.id} value={p.id}>{p[language] || p.en}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
                                     {['title', 'price', 'address', 'size'].map(field => (
                                         <div key={field}>
                                             <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{field}</label>
@@ -835,7 +1312,7 @@
                                         </div>
                                     ))}
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Features</label>
+                                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'features')}</label>
                                         <textarea
                                             rows="5"
                                             value={property.features}
@@ -851,11 +1328,11 @@
                              {/* Agent Info (Optional) */}
                              <div className="space-y-4">
                                 <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                    <span className="bg-slate-800 p-1 rounded"><Layout className="w-3 h-3" /></span> Agent Info (Optional)
+                                    <span className="bg-slate-800 p-1 rounded"><Layout className="w-3 h-3" /></span> {t(language, 'agentInfo')}
                                 </h2>
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Name / Agency</label>
+                                        <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'nameAgency')}</label>
                                         <input 
                                             type="text"
                                             value={agent.name}
@@ -864,9 +1341,9 @@
                                             className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Phone</label>
+                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'phone')}</label>
                                             <input 
                                                 type="text"
                                                 value={agent.phone}
@@ -876,7 +1353,7 @@
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">Website</label>
+                                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1 block">{t(language, 'website')}</label>
                                             <input 
                                                 type="text"
                                                 value={agent.website}
@@ -892,31 +1369,84 @@
                     </div>
 
                     {/* --- Preview Area --- */}
-                    <div ref={previewRef} className="flex-1 bg-slate-950 overflow-hidden flex items-center justify-center relative">
-                        {/* Container needs to be large enough to hold scaled content centrally */}
+                    <div ref={previewRef} className="flex-1 min-h-[60vh] md:min-h-0 md:h-full bg-slate-950 overflow-auto md:overflow-hidden flex items-center justify-center relative p-4 md:p-6">
+                        {/* Container - single column on narrow, side-by-side on wide */}
                         <div 
                             style={{ 
                                 transform: `scale(${scale})`, 
                                 transformOrigin: 'center center',
-                                width: window.innerWidth < 1000 ? '794px' : '1620px', // Single or Double width base
-                                transition: 'width 0.3s ease'
+                                width: windowWidth < 900 ? '794px' : '1620px',
+                                transition: 'transform 0.2s ease'
                             }}
-                            className="flex flex-row flex-wrap justify-center gap-8 shrink-0 transition-transform duration-200"
+                            className="flex flex-row flex-wrap justify-center gap-4 md:gap-8 shrink-0 items-center"
                         >
                              {/* Render selected template (contains Page 1 and Page 2) */}
-                            {template === 'modernist' && <ModernistTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'luxury' && <LuxuryTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'minimalist' && <MinimalistTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'classic' && <ClassicTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'industrial' && <IndustrialTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'scandinavian' && <ScandinavianTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'urban' && <UrbanLoftTemplate property={property} images={currentImages} agent={agent} />}
-                            {template === 'magazine' && <MagazineTemplate property={property} images={currentImages} agent={agent} />}
+                            {template === 'modernist' && <ModernistTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'luxury' && <LuxuryTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'minimalist' && <MinimalistTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'classic' && <ClassicTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'industrial' && <IndustrialTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'scandinavian' && <ScandinavianTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'urban' && <UrbanLoftTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
+                            {template === 'magazine' && <MagazineTemplate property={property} images={currentImages} agent={agent} language={language} listingType={listingType} propertyType={propertyType} />}
                         </div>
                         
-                        {/* Zoom Indicator */}
-                        <div className="fixed bottom-6 right-6 bg-slate-800/80 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-mono border border-slate-700 shadow-lg pointer-events-none">
+                        {/* Zoom Indicator - hidden on very small screens */}
+                        <div className="hidden sm:flex fixed bottom-6 right-6 bg-slate-800/80 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-mono border border-slate-700 shadow-lg pointer-events-none" style={{ marginBottom: 'env(safe-area-inset-bottom)' }}>
                             Fit: {Math.round(scale * 100)}%
+                        </div>
+
+                        {/* Language chooser overlay on first visit */}
+                        {showLanguageDialog && (
+                            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur flex items-center justify-center z-30">
+                                <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 sm:p-8 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                                    <h2 className="text-xl font-bold mb-2">{t(language, 'languageTitle')}</h2>
+                                    <p className="text-sm text-slate-400 mb-6">
+                                        {t(language, 'languageSubtitle')}
+                                    </p>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                                        {LANGUAGES.map(l => (
+                                            <button
+                                                key={l.code}
+                                                onClick={() => handleSelectLanguage(l.code)}
+                                                className={`px-3 py-2 rounded-lg text-sm border text-left transition-all ${
+                                                    language === l.code
+                                                        ? 'bg-blue-600 border-blue-500 text-white'
+                                                        : 'bg-slate-800 border-slate-700 hover:border-blue-500 hover:text-blue-300'
+                                                }`}
+                                            >
+                                                {l.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500">
+                                        {t(language, 'startInLanguage')}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* In-app translate controls - bottom on mobile for easier reach */}
+                        <div className="fixed bottom-4 left-2 right-2 md:left-auto md:right-6 md:top-6 md:bottom-auto flex justify-center md:justify-end bg-slate-900/95 border border-slate-700 rounded-xl md:rounded-full px-3 py-2 flex-wrap items-center gap-2 text-xs shadow-lg" style={{ marginBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}>
+                            <span className="text-slate-400">{t(language, 'translatePdfLabel')}:</span>
+                            <select
+                                value={translateTarget}
+                                onChange={e => setTranslateTarget(e.target.value)}
+                                className="bg-slate-800 border border-slate-700 rounded-full px-2 py-1 text-xs focus:outline-none focus:border-blue-500"
+                            >
+                                {LANGUAGES.map(l => (
+                                    <option key={l.code} value={l.code}>
+                                        {l.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={handleTranslateContent}
+                                disabled={isTranslating}
+                                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1 rounded-full font-semibold text-[11px] flex items-center gap-1"
+                            >
+                                {isTranslating ? t(language, 'translating') : t(language, 'translateButton')}
+                            </button>
                         </div>
                     </div>
                 </div>
