@@ -63,8 +63,22 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        // Fix: Avoid 'as' keyword in destructuring if causing issues, or use strict variable names
-        const { Camera, Home, Upload, X, FileText, Layout, Download, Check, Image: ImageIcon, Palette, ChevronDown, Loader2 } = LucideReact;
+        const iconSet = window.LucideReact || window.lucideReact || window.lucide || {};
+        const FallbackIcon = ({ className = '' }) => <span className={className} aria-hidden="true">•</span>;
+        const asComponent = (value) => (typeof value === 'function' ? value : FallbackIcon);
+
+        const Camera = asComponent(iconSet.Camera);
+        const Home = asComponent(iconSet.Home);
+        const Upload = asComponent(iconSet.Upload);
+        const X = asComponent(iconSet.X);
+        const FileText = asComponent(iconSet.FileText);
+        const Layout = asComponent(iconSet.Layout);
+        const Download = asComponent(iconSet.Download);
+        const Check = asComponent(iconSet.Check);
+        const ImageIcon = asComponent(iconSet.Image);
+        const Palette = asComponent(iconSet.Palette);
+        const ChevronDown = asComponent(iconSet.ChevronDown);
+        const Loader2 = asComponent(iconSet.Loader2);
 
         // --- Templates ---
 
